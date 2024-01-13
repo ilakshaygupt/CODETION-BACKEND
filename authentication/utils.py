@@ -1,24 +1,28 @@
 import random
-
+import re
+from string import ascii_lowercase, ascii_uppercase
 import requests
 from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
 from google.auth.transport import requests
 from google.oauth2 import id_token
-from rest_framework.exceptions import AuthenticationFailed
-
 from authentication.models import User
-
 from .models import OneTimePassword, User
 
+def random_password():
+    password = ''
+    for i in range(8):
+        password += random.choice(ascii_lowercase)
+        password += random.choice(ascii_uppercase)
+        password += random.choice('!@#$%^&*()_+')
+        password += random.choice('1234567890')
+    return password
 
 def send_generated_otp_to_email(email, request):
     subject = 'One time passcode for Email verification'
     otp = random.randint(1000, 9999)
     user = User.objects.get(email=email)
-    email_body = f'Hi {user.username} thanks for signing up on codetion please verify your email with the \n one time passcode {otp}'
+    email_body = f'Hi {user.username} thanks for signing up on CODETION please verify your email with the \n one time passcode {otp}'
     from_email = settings.EMAIL_HOST_USER
     try:
         otp_obj = OneTimePassword.objects.get(email=user.email)
@@ -45,6 +49,9 @@ def normalize_email(email):
 
 
 def normalize_username(username):
+    regex = r'^[a-z0-9_-]+$'
+    if not re.match(regex, username):
+        return 'Username can only contain alphanumeric characters, hyphens and underscores'
     username = username.strip()
     username_components = username.split()
     if len(username_components) > 1:
@@ -57,7 +64,6 @@ class Google():
     def validate(access_token):
         try:
             id_info = id_token.verify_oauth2_token(
-
                 access_token, requests.Request())
             return id_info
         except:

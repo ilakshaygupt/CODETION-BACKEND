@@ -5,33 +5,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import timedelta
 from django.utils import timezone
 from authentication.managers import UserManager
-import uuid
 
-# Create your models here.
 
 AUTH_PROVIDERS = {
     "email": "email",
     "google": "google",
-    "github": "github",
-    "linkedin": "linkedin",
 }
-
-
-class IncrementalCharField(models.CharField):
-    def pre_save(self, model_instance, add):
-        if add and not getattr(model_instance, self.attname):
-            # Generate an incremental value for CharField
-            last_object = model_instance.__class__.objects.last()
-            if last_object:
-                last_value = getattr(last_object, self.attname)
-                if last_value:
-                    value = str(int(last_value) + 1).zfill(len(last_value))
-                    setattr(model_instance, self.attname, value)
-                else:
-                    setattr(model_instance, self.attname, "0000001")
-            else:
-                setattr(model_instance, self.attname, "0000001")
-        return super().pre_save(model_instance, add)
 
 
 class User(AbstractBaseUser, PermissionsMixin):

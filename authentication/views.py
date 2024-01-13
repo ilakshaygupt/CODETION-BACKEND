@@ -1,16 +1,15 @@
 
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from authentication.serializers import *
+from authentication.serializers import (RegisterSerializer, VerifyEmailSerializer,
+                                         LoginSerializer, LogoutUserSerializer,
+                                         GoogleSignInSerializer,PasswordRequestSerializer,
+                                         PasswordResetRequestSerializer,SetNewPasswordSerializer
+                                         ,UserSerializer)
 from rest_framework import status
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework.permissions import IsAuthenticated
 
 from authentication.utils import send_generated_otp_to_email
-from .models import User
 
 
 class RegisterView(GenericAPIView):
@@ -116,7 +115,7 @@ class ResendOTPView(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(serializers.validated_data,status=status.HTTP_200_OK)
+        return Response(serializer.validated_data,status=status.HTTP_200_OK)
 
 class GoogleOauthSignInview(GenericAPIView):
     serializer_class = GoogleSignInSerializer

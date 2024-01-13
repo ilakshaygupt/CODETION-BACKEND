@@ -1,15 +1,8 @@
 
-import json
-from dataclasses import field
-from string import ascii_lowercase, ascii_uppercase
 import re
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
-from django.utils.encoding import force_str, smart_bytes, smart_str
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -17,24 +10,46 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from authentication.get_google_auth_code import get_id_token
 
 from .utils import Google
-from .models import ForgetPassword, User
-from .utils import *
-def random_password():
-    password = ''
-    for i in range(8):
-        password += random.choice(ascii_lowercase)
-        password += random.choice(ascii_uppercase)
-        password += random.choice('!@#$%^&*()_+')
-        password += random.choice('1234567890')
-    return password
+from .models import ForgetPassword, OneTimePassword, User
+from .utils import normalize_email, normalize_username, random_password, send_generated_otp_to_email
 
+email_error_messages = {
+    'blank': 'Email cannot be blank',
+    'required': 'Email is required',
+    'max_length': 'Email cannot be more than 155 characters',
+    'min_length': 'Email cannot be less than 6 characters'
+
+}
+
+username_error_messages = {
+    'blank': 'Username cannot be blank',
+    'required': 'Username is required',
+    'max_length': 'Username cannot be more than 25 characters',
+    'min_length': 'Username cannot be less than 6 characters'
+}
+
+password_error_messages = {
+    'blank': 'Password cannot be blank',
+    'required': 'Password is required',
+    'max_length': 'Password cannot be more than 68 characters',
+    'min_length': 'Password cannot be less than 6 characters',
+}
+
+otp_error_messages = {
+    'blank': 'OTP cannot be blank',
+    'required': 'OTP is required',
+    'max_length': 'OTP cannot be more than 4 characters',
+    'min_length': 'OTP cannot be less than 4 characters'
+}
 class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length=155, min_length=6)
-    username = serializers.CharField(max_length=25, min_length=6)
+    email = serializers.EmailField(max_length=155, min_length=6,
+                                   error_messages=email_error_messages)
+    username = serializers.CharField(max_length=25, min_length=6,error_messages=username_error_messages)
     password = serializers.CharField(
-        max_length=68, min_length=6, write_only=True)
+        max_length=68, min_length=6, write_only=True, error_messages=password_error_messages
+         )
     password2 = serializers.CharField(
-        max_length=68, min_length=6, write_only=True)
+        max_length=68, min_length=6, write_only=True, error_messages=password_error_messages)
 
     class Meta:
         model = User
@@ -82,8 +97,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class VerifyEmailSerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=155, min_length=6)
-    otp = serializers.CharField()
+    email = serializers.EmailField(max_length=155, min_length=6,error_messages=email_error_messages)
+    otp = serializers.CharField(min_length=4, max_length=4,error_messages=otp_error_messages)
 
     def validate(self, attrs):
         email = normalize_email(attrs.get('email'))
@@ -114,8 +129,8 @@ class VerifyEmailSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length=155, min_length=6)
-    password = serializers.CharField(max_length=68, write_only=True)
+    email = serializers.EmailField(max_length=155, min_length=6,error_messages = email_error_messages)
+    password = serializers.CharField(max_length=68, write_only=True,error_messages=password_error_messages)
 
     class Meta:
         model = User
@@ -156,8 +171,8 @@ class LoginSerializer(serializers.ModelSerializer):
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=255)
-    otp = serializers.CharField(min_length=4, max_length=4)
+    email = serializers.EmailField(max_length=255,error_messages=email_error_messages)
+    otp = serializers.CharField(min_length=4, max_length=4,error_messages=otp_error_messages)
 
     class Meta:
         fields = ['email', 'otp']
@@ -198,7 +213,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
 
 class PasswordRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=255)
+    email = serializers.EmailField(max_length=255,error_messages=email_error_messages)
 
     class Meta:
         fields = ['email']
@@ -221,9 +236,9 @@ class PasswordRequestSerializer(serializers.Serializer):
 
 class SetNewPasswordSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(
-        max_length=100, min_length=6, write_only=True)
+        max_length=100, min_length=6, write_only=True, error_messages=password_error_messages)
     re_confirm_password = serializers.CharField(
-        max_length=100, min_length=6, write_only=True)
+        max_length=100, min_length=6, write_only=True, error_messages=password_error_messages)
 
     token = serializers.CharField(min_length=3, write_only=True)
 
@@ -262,9 +277,6 @@ class SetNewPasswordSerializer(serializers.Serializer):
 class LogoutUserSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
     access_token = serializers.CharField()
-    default_error_message = {
-        'bad_token': ('Token is expired or invalid')
-    }
 
     def validate(self, attrs):
 
@@ -273,7 +285,7 @@ class LogoutUserSerializer(serializers.Serializer):
             refresh_token = RefreshToken(refresh_token)
             refresh_token.blacklist()
         except TokenError:
-            raise serializers.ValidationError('bad_token')
+            raise serializers.ValidationError('Token in Invalid or Expired')
         return attrs
 
 
@@ -281,7 +293,7 @@ class GoogleSignInSerializer(serializers.Serializer):
 
     access_token = serializers.CharField(min_length=6)
     username = serializers.CharField(
-        max_length=255, min_length=6, required=False)
+        max_length=255, min_length=6, required=False, allow_blank=True,error_messages = username_error_messages)
 
     def validate(self, attrs):
         ided_token = get_id_token(attrs.get('access_token'))
@@ -291,7 +303,6 @@ class GoogleSignInSerializer(serializers.Serializer):
         except:
             raise serializers.ValidationError(
                 'this token has expired or invalid please try again')
-
         if user_data['aud'] != settings.GOOGLE_CLIENT_ID:
             raise AuthenticationFailed('Could not verify user.')
         email = user_data['email']
