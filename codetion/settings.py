@@ -64,7 +64,7 @@ SOCIAL_AUTH_PASSWORD = os.getenv('SOCIAL_AUTH_PASSWORD')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-        "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,7 +73,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'JWT.urls'
+ROOT_URLCONF = 'codetion.urls'
 
 TEMPLATES = [
     {
@@ -92,7 +92,7 @@ TEMPLATES = [
 ]
 
 
-WSGI_APPLICATION = 'JWT.wsgi.application'
+WSGI_APPLICATION = 'codetion.wsgi.application'
 
 
 # Database
