@@ -44,17 +44,16 @@ otp_error_messages = {
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=155, min_length=6,
                                    error_messages=email_error_messages)
-    username = serializers.CharField(max_length=25, min_length=6,error_messages=username_error_messages)
+    username = serializers.CharField(max_length=15, min_length=6,error_messages=username_error_messages)
     password = serializers.CharField(
         max_length=68, min_length=6, write_only=True, error_messages=password_error_messages
          )
-    password2 = serializers.CharField(
-        max_length=68, min_length=6, write_only=True, error_messages=password_error_messages)
+   
 
     class Meta:
         model = User
         fields = ['email', 'username',
-                  'password', 'password2']
+                  'password']
 
     def validate(self, attrs):
         email = normalize_email(attrs.get('email'))
@@ -65,10 +64,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.filter(username=username)
         if user and user[0].is_verified:
             raise serializers.ValidationError('username already exists')
-        password = attrs.get('password', '')
-        password2 = attrs.get('password2', '')
-        if password != password2:
-            raise serializers.ValidationError('passwords do not match')
         return attrs
 
     def validate_email(self, value):
@@ -293,7 +288,7 @@ class GoogleSignInSerializer(serializers.Serializer):
 
     access_token = serializers.CharField(min_length=6)
     username = serializers.CharField(
-        max_length=255, min_length=6, required=False, allow_blank=True,error_messages = username_error_messages)
+        max_length=15, min_length=6, required=False, allow_blank=True,error_messages = username_error_messages)
 
     def validate(self, attrs):
         ided_token = get_id_token(attrs.get('access_token'))
