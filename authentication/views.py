@@ -1,10 +1,10 @@
 
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from authentication.serializers import (RegisterSerializer, VerifyEmailSerializer,
+from authentication.serializers import (RegisterSerializer, SetNewPasswordSerializer, VerifyEmailSerializer,
                                          LoginSerializer, LogoutUserSerializer,
-                                         GoogleSignInSerializer,PasswordRequestSerializer,
-                                         PasswordResetRequestSerializer,SetNewPasswordSerializer
+                                         GoogleSignInSerializer,
+                                         PasswordResetRequestSerializer
                                          ,UserSerializer)
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -65,55 +65,12 @@ class LogOutView(GenericAPIView):
         )
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
-class PasswordResetRequestView(GenericAPIView):
-    serializer_class = PasswordRequestSerializer
 
-    def post(self, request):
-        serializer = self.serializer_class(
-            data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        return Response(
-            {
-                'success': True,
-                'message': 'OTP sent to email',
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
-
-class PasswordResetTokenView(GenericAPIView):
-    serializer_class = PasswordResetRequestSerializer
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        return Response(
-            {
-                'message': 'Reset tokens generated successfully',
-                'token': serializer.get_token(),
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
-class PasswordResetConfirmView(GenericAPIView):
-    serializer_class = SetNewPasswordSerializer
-
-    def post(self, request):
-        serializer = self.serializer_class(
-            data=request.data, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        return Response(
-            {'success': True, 'message': 'password reset is successful'},
-            status=status.HTTP_200_OK,
-        )
 class ResendOTPView(GenericAPIView):
     serializer_class = PasswordResetRequestSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data,context={'request':request})
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data,status=status.HTTP_200_OK)
 
@@ -132,3 +89,33 @@ class UserView(GenericAPIView):
     def get(self, request):
         serializer = self.serializer_class(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(GenericAPIView):
+    serializer_class = PasswordResetRequestSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            {
+                'message': 'An email to reset psasword has been sent to your email.',
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(GenericAPIView):
+    serializer_class = SetNewPasswordSerializer
+
+    def post(self, request, uidb64, token):
+        serializer = self.serializer_class(
+            data=request.data, context={'uidb64': uidb64, 'token': token}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            {'message': 'Password reset successfully'},
+            status=status.HTTP_200_OK,
+        )

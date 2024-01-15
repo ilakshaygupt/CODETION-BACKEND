@@ -39,7 +39,17 @@ def send_generated_otp_to_email(email, request):
     )
     d_email.send()
 
-
+def send_email_verification_link(email, request):
+    subject = 'Email verification link'
+    user = User.objects.get(email=email)
+    email_body = f'Hi {user.username} thanks for signing up on CODETION please verify your email with the \n link below \n {request.build_absolute_uri()}'
+    from_email = settings.EMAIL_HOST_USER
+    d_email = EmailMessage(
+        subject=subject, body=email_body, from_email=from_email, to=[
+            user.email]
+    )
+    d_email.send()
+    
 def normalize_email(email):
     email = email.strip()
     email_components = email.split()

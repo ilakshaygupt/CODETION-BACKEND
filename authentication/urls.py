@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (RegisterView, VerifyUserEmailView, ResendOTPView, LoginUserView, LogOutView, PasswordResetRequestView, PasswordResetTokenView, PasswordResetConfirmView, GoogleOauthSignInview, UserView)
+from .views import (PasswordResetConfirmView, RegisterView, VerifyUserEmailView, ResendOTPView, LoginUserView ,LogOutView, PasswordResetRequestView, GoogleOauthSignInview, UserView)
 from rest_framework_simplejwt.views import (TokenRefreshView,)
 from rest_framework_simplejwt.views import  TokenVerifyView
 
@@ -10,12 +10,10 @@ urlpatterns = [
     path('resend-otp/', ResendOTPView.as_view(),name='resend-otp'),
     path('login/', LoginUserView.as_view(),name='login-user'),
     path('logout/', LogOutView.as_view(), name='blacklist'),
-     path('password-reset-request/', PasswordResetRequestView.as_view()),
-    path('password-reset-token/', PasswordResetTokenView.as_view(),
+   path('password-reset/', PasswordResetRequestView.as_view(),
          name='password-reset'),
-
-    path('password-reset-confirm/', PasswordResetConfirmView.as_view(),
-         name='set-new-password'),
+    path('password-reset-confirm/<uidb64>/<token>/',
+         PasswordResetConfirmView.as_view(), name='reset-password-confirm'),
 
     path('token/refresh/', TokenRefreshView.as_view(),
          name='token_refresh'),
