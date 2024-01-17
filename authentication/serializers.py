@@ -5,6 +5,7 @@ import re
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -14,7 +15,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import smart_str
 from .utils import Google
 from .models import OneTimePassword, User
-from .utils import normalize_email, normalize_username, random_password, send_generated_otp_to_email
+from .utils import normalize_email, normalize_username, random_password
 from django.core.mail import EmailMessage
 email_error_messages = {
     'blank': 'Email cannot be blank',
@@ -46,46 +47,54 @@ otp_error_messages = {
 }
 
 
+class UsernameField(serializers.CharField):
+    max_length = 25
+    min_length = 6
+    error_messages = username_error_messages
+
+    def to_internal_value(self, data):
+        regex = r'^[a-z0-9_-]+$'
+        if not re.match(regex, data):
+            raise serializers.ValidationError(
+                'Username can only contain alphanumeric characters, hyphens and underscores')
+        data = data.strip()
+        username_components = data.split()
+        if len(username_components) > 1:
+            raise serializers.ValidationError('Username can\'t have spaces')
+        return data.lower()
+
+
+class PasswordField(serializers.CharField):
+    max_length = 68
+    min_length = 6
+    error_messages = password_error_messages
+
+    def to_internal_value(self, data):
+        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+        if re.match(pattern, data):
+            return data
+        else:
+            raise serializers.ValidationError(
+                'password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character')
+
+
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=155, min_length=6,
-                                   error_messages=email_error_messages)
-    username = serializers.CharField(
-        max_length=15, min_length=6, error_messages=username_error_messages)
-    password = serializers.CharField(
-        max_length=68, min_length=6, write_only=True, error_messages=password_error_messages
-    )
+                                   error_messages=email_error_messages, validators=[normalize_email])
+    username = UsernameField()
+
+    password = PasswordField()
 
     class Meta:
         model = User
         fields = ['email', 'username',
                   'password']
 
-    def validate(self, attrs):
-        email = normalize_email(attrs.get('email'))
-        username = normalize_username(attrs.get('username'))
-        user = User.objects.filter(email=email,)
-        if user and user[0].is_verified:
-            raise serializers.ValidationError('email already exists')
-        user = User.objects.filter(username=username)
-        if user and user[0].is_verified:
-            raise serializers.ValidationError('username already exists')
-        return attrs
-
-    def validate_email(self, value):
+    def normalize_email(self, value):
         email = normalize_email(value)
         return email
-
-    def validate_username(self, value):
-        username = normalize_username(value)
-        return username
-
-    def validate_password(self, value):
-        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
-        if re.match(pattern, value):
-            return value
-        else:
-            raise serializers.ValidationError(
-                'password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character')
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -133,8 +142,7 @@ class VerifyEmailSerializer(serializers.Serializer):
 class LoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         max_length=155, min_length=6, error_messages=email_error_messages)
-    password = serializers.CharField(
-        max_length=68, write_only=True, error_messages=password_error_messages)
+    password = PasswordField()
 
     class Meta:
         model = User
@@ -161,7 +169,7 @@ class LoginSerializer(serializers.ModelSerializer):
             'refresh_token': str(tokens['refresh'])
         }
 
-    def validate_email(self, value):
+    def normalize_email(self, value):
         email = normalize_email(value)
         return email
 
@@ -199,7 +207,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         d_email.send()
         return attrs
 
-    def validate_email(self, value):
+    def normalize_email(self, value):
         email = normalize_email(value)
         return email
 
@@ -222,8 +230,7 @@ class LogoutUserSerializer(serializers.Serializer):
 class GoogleSignInSerializer(serializers.Serializer):
 
     access_token = serializers.CharField(min_length=6)
-    username = serializers.CharField(
-        max_length=15, min_length=6, required=False, allow_blank=True, error_messages=username_error_messages)
+    username = UsernameField()
 
     def validate(self, attrs):
         ided_token = get_id_token(attrs.get('access_token'))
@@ -274,8 +281,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class SetNewPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(
-        max_length=68, min_length=6, write_only=True, error_messages=password_error_messages)
+    password = PasswordField()
+
     def validate(self, attrs):
         try:
             password = attrs.get('password')

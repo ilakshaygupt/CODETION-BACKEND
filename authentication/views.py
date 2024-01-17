@@ -1,6 +1,7 @@
 
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from authentication.models import User
 from authentication.serializers import (RegisterSerializer, SetNewPasswordSerializer, VerifyEmailSerializer,
                                          LoginSerializer, LogoutUserSerializer,
                                          GoogleSignInSerializer,
@@ -16,9 +17,15 @@ class RegisterView(GenericAPIView):
     serializer_class = RegisterSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        serializers = self.serializer_class(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        user = User.objects.filter(email=serializers.validated_data['email'])
+        if user and user[0].is_verified:
+            raise serializers.ValidationError('email already exists')
+        user = User.objects.filter(username=serializers.validated_data['username'])
+        if user and user[0].is_verified:
+            raise serializers.ValidationError('username already exists')
+        user = serializers.save()
         send_generated_otp_to_email(user.email, request)
         return Response(
             {
