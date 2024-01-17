@@ -1,11 +1,11 @@
 
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from authentication.renderer import UserRenderer
 from authentication.serializers import (RegisterSerializer, SetNewPasswordSerializer, VerifyEmailSerializer,
-                                         LoginSerializer, LogoutUserSerializer,
-                                         GoogleSignInSerializer,
-                                         PasswordResetRequestSerializer
-                                         ,UserSerializer)
+                                        LoginSerializer, LogoutUserSerializer,
+                                        GoogleSignInSerializer,
+                                        PasswordResetRequestSerializer, UserSerializer)
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
@@ -14,6 +14,7 @@ from authentication.utils import send_generated_otp_to_email
 
 class RegisterView(GenericAPIView):
     serializer_class = RegisterSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -31,6 +32,7 @@ class RegisterView(GenericAPIView):
 
 class VerifyUserEmailView(GenericAPIView):
     serializer_class = VerifyEmailSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request):
         serializers = self.serializer_class(data=request.data)
@@ -48,6 +50,7 @@ class VerifyUserEmailView(GenericAPIView):
 
 class LoginUserView(GenericAPIView):
     serializer_class = LoginSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request):
         serializer = self.serializer_class(
@@ -55,9 +58,11 @@ class LoginUserView(GenericAPIView):
         )
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
 
 class LogOutView(GenericAPIView):
     serializer_class = LogoutUserSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request):
         serializer = self.serializer_class(
@@ -66,25 +71,33 @@ class LogOutView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
+
 class ResendOTPView(GenericAPIView):
     serializer_class = PasswordResetRequestSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data,context={'request':request})
+        serializer = self.serializer_class(
+            data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.validated_data,status=status.HTTP_200_OK)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
 
 class GoogleOauthSignInview(GenericAPIView):
     serializer_class = GoogleSignInSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = ((serializer.validated_data))
         return Response(data, status=status.HTTP_200_OK)
+
+
 class UserView(GenericAPIView):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
+    renderer_classes = (UserRenderer,)
 
     def get(self, request):
         serializer = self.serializer_class(request.user)
@@ -93,6 +106,7 @@ class UserView(GenericAPIView):
 
 class PasswordResetRequestView(GenericAPIView):
     serializer_class = PasswordResetRequestSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -108,6 +122,7 @@ class PasswordResetRequestView(GenericAPIView):
 
 class PasswordResetConfirmView(GenericAPIView):
     serializer_class = SetNewPasswordSerializer
+    renderer_classes = (UserRenderer,)
 
     def post(self, request, uidb64, token):
         serializer = self.serializer_class(
