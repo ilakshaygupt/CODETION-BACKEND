@@ -4,6 +4,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from authentication.get_google_auth_code import get_id_token
 from authentication.models import OneTimePassword, User
+from authentication.renderers import UserRenderer
 from authentication.serializers import (
     RegisterSerializer,
     ResendOTPSerializer,
@@ -29,6 +30,7 @@ from email.message import EmailMessage
 
 class RegisterView(GenericAPIView):
     serializer_class = RegisterSerializer
+    renderer_classes = [UserRenderer]
 
     def post(self, request):
         serializers = self.serializer_class(data=request.data)
