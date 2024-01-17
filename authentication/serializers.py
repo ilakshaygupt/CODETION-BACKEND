@@ -1,21 +1,16 @@
-
-from audioop import reverse
 from email.message import EmailMessage
 import re
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from django.contrib.sites.shortcuts import get_current_site
 from authentication.get_google_auth_code import get_id_token
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import smart_str
 from .utils import Google
 from .models import OneTimePassword, User
-from .utils import normalize_email, normalize_username, random_password
+from .utils import normalize_email, random_password
 from django.core.mail import EmailMessage
 email_error_messages = {
     'blank': 'Email cannot be blank',
@@ -78,8 +73,6 @@ class PasswordField(serializers.CharField):
                 'password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character')
 
 
-
-
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=155, min_length=6,
                                    error_messages=email_error_messages, validators=[normalize_email])
@@ -98,9 +91,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data.get('username'),
-            password=validated_data.get('password')
+            **validated_data
         )
         return user
 
@@ -110,33 +101,6 @@ class VerifyEmailSerializer(serializers.Serializer):
         max_length=155, min_length=6, error_messages=email_error_messages)
     otp = serializers.CharField(
         min_length=4, max_length=4, error_messages=otp_error_messages)
-
-    def validate(self, attrs):
-        email = normalize_email(attrs.get('email'))
-        try:
-            user = User.objects.get(email=email)
-        except:
-            raise serializers.ValidationError('Email does not exist')
-        if user.is_verified:
-            raise serializers.ValidationError('Email is already verified')
-        otp = attrs.get('otp')
-        try:
-            user_pass_obj = OneTimePassword.objects.get(otp=otp)
-        except:
-            raise serializers.ValidationError('Invalid OTP')
-        if user_pass_obj.has_expired():
-            raise serializers.ValidationError('OTP has expired')
-        if otp == user_pass_obj.otp:
-            user.is_verified = True
-            tokenss = user.tokens()
-            user.save()
-            user_pass_obj.delete()
-            return {
-                'message': 'account email verified successfully',
-                'token': tokenss
-            }
-        else:
-            raise AuthenticationFailed('Invalid OTP')
 
 
 class LoginSerializer(serializers.ModelSerializer):
@@ -149,37 +113,12 @@ class LoginSerializer(serializers.ModelSerializer):
         fields = ['email', 'password',
                   ]
 
-    def validate(self, attrs):
-        email = normalize_email(attrs.get('email'))
-        try:
-            user = User.objects.get(email=email)
-        except:
-            raise AuthenticationFailed('Email does not exist')
-        if not user.is_verified:
-            raise AuthenticationFailed('Email is not verified')
-        tokens = user.tokens()
-        password = attrs.get('password')
-        request = self.context.get('request')
-        user = authenticate(request, email=email, password=password)
-        if not user:
-            raise AuthenticationFailed(
-                'invalid Password or Email. Please try again')
-        return {
-            'access_token': str(tokens['access']),
-            'refresh_token': str(tokens['refresh'])
-        }
+
+        
 
     def normalize_email(self, value):
         email = normalize_email(value)
         return email
-
-    def validate_password(self, value):
-        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
-        if re.match(pattern, value):
-            return value
-        else:
-            raise serializers.ValidationError(
-                'password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character')
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
@@ -211,7 +150,15 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         email = normalize_email(value)
         return email
 
+class ResendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        max_length=155, min_length=6, error_messages=email_error_messages)
 
+
+
+    def normalize_email(self, value):
+        email = normalize_email(value)
+        return email
 class LogoutUserSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
     access_token = serializers.CharField()
@@ -269,10 +216,6 @@ class GoogleSignInSerializer(serializers.Serializer):
                 'refresh_token': str(tokens['refresh'])
             }
 
-    def validate_username(self, value):
-        username = normalize_username(value)
-        return username
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -283,17 +226,4 @@ class UserSerializer(serializers.ModelSerializer):
 class SetNewPasswordSerializer(serializers.Serializer):
     password = PasswordField()
 
-    def validate(self, attrs):
-        try:
-            password = attrs.get('password')
-            token = self.context.get('token')
-            uidb64 = self.context.get('uidb64')
-            id = urlsafe_base64_decode(uidb64).decode()
-            user = User.objects.get(id=id)
-            if not PasswordResetTokenGenerator().check_token(user, token):
-                raise AuthenticationFailed('The reset link is invalid', 401)
-            user.set_password(password)
-            user.save()
-            return user
-        except Exception as e:
-            raise AuthenticationFailed('The reset link is invalid', 401)
+

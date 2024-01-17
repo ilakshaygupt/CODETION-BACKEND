@@ -1,12 +1,10 @@
 import random
-import re
 from string import ascii_lowercase, ascii_uppercase
 import requests
 from django.conf import settings
 from django.core.mail import EmailMessage
 from google.auth.transport import requests
 from google.oauth2 import id_token
-from authentication.models import User
 from .models import OneTimePassword, User
 
 
@@ -60,17 +58,6 @@ def normalize_email(email):
     if len(email_components) > 1:
         return 'Email can\'t have spaces'
     return email.lower()
-
-
-def normalize_username(username):
-    regex = r'^[a-z0-9_-]+$'
-    if not re.match(regex, username):
-        return 'Username can only contain alphanumeric characters, hyphens and underscores'
-    username = username.strip()
-    username_components = username.split()
-    if len(username_components) > 1:
-        return 'Username can\'t have spaces'
-    return username.lower()
 
 
 class Google():
