@@ -113,9 +113,6 @@ class LoginSerializer(serializers.ModelSerializer):
         fields = ['email', 'password',
                   ]
 
-
-        
-
     def normalize_email(self, value):
         email = normalize_email(value)
         return email
@@ -125,96 +122,29 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(
         max_length=155, min_length=6, error_messages=email_error_messages)
 
-    def validate(self, attrs):
-        email = normalize_email(attrs.get('email'))
-        try:
-            user = User.objects.get(email=email)
-        except:
-            raise serializers.ValidationError('Email does not exist')
-        if not user.is_verified:
-            raise serializers.ValidationError('Email is not verified')
-        uidb64 = urlsafe_base64_encode(smart_str(user.id).encode())
-        token = PasswordResetTokenGenerator().make_token(user)
-        email_subject = "Your Password Reset Subject"
-        abslink = f"http:/127.0.0.8:8000/{uidb64}/{token}"
-        email_body = f"Hi {user.username}, use the link below to reset your password: {abslink}"
-        from_email = settings.EMAIL_HOST_USER
-        d_email = EmailMessage(
-            subject=email_subject, body=email_body, from_email=from_email, to=[
-                user.email]
-        )
-        d_email.send()
-        return attrs
-
     def normalize_email(self, value):
         email = normalize_email(value)
         return email
+
 
 class ResendOTPSerializer(serializers.Serializer):
     email = serializers.EmailField(
         max_length=155, min_length=6, error_messages=email_error_messages)
 
-
-
     def normalize_email(self, value):
         email = normalize_email(value)
         return email
+
+
 class LogoutUserSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
     access_token = serializers.CharField()
-
-    def validate(self, attrs):
-
-        refresh_token = attrs.get('refresh_token')
-        try:
-            refresh_token = RefreshToken(refresh_token)
-            refresh_token.blacklist()
-        except TokenError:
-            raise serializers.ValidationError('Token in Invalid or Expired')
-        return attrs
 
 
 class GoogleSignInSerializer(serializers.Serializer):
 
     access_token = serializers.CharField(min_length=6)
     username = UsernameField()
-
-    def validate(self, attrs):
-        ided_token = get_id_token(attrs.get('access_token'))
-        user_data = Google.validate(ided_token)
-        try:
-            user_data['sub']
-        except:
-            raise serializers.ValidationError(
-                'this token has expired or invalid please try again')
-        if user_data['aud'] != settings.GOOGLE_CLIENT_ID:
-            raise AuthenticationFailed('Could not verify user.')
-        email = user_data['email']
-        try:
-            user = User.objects.get(email=email)
-            if not user.is_verified:
-                raise AuthenticationFailed('Email is not verified')
-            tokens = user.tokens()
-            return {
-                'access_token': str(tokens['access']),
-                'refresh_token': str(tokens['refresh'])
-            }
-        except:
-            provider = 'google'
-            new_user = {
-                'email': email,
-                'username': attrs['username'],
-                'password': random_password(),
-            }
-            user = User.objects.create_user(**new_user)
-            user.auth_provider = provider
-            user.is_verified = True
-            user.save()
-            tokens = user.tokens()
-            return {
-                'access_token': str(tokens['access']),
-                'refresh_token': str(tokens['refresh'])
-            }
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -225,5 +155,3 @@ class UserSerializer(serializers.ModelSerializer):
 
 class SetNewPasswordSerializer(serializers.Serializer):
     password = PasswordField()
-
-

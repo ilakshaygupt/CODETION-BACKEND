@@ -84,13 +84,12 @@ class VerifyUserEmailView(GenericAPIView):
         if otp == user_pass_obj.otp:
             user.is_verified = True
             tokenss = user.tokens()
-            user.save()
             user_pass_obj.delete()
-            return {
+            return Response({
                 'message': 'account email verified successfully',
                 'token': tokenss,
                 'success': True
-            }
+            }, status=status.HTTP_200_OK)
         else:
             return Response({"message": "OTP is not same", 'success': True}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -165,7 +164,7 @@ class GoogleOauthSignInview(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        authorization_token = get_id_token(serializer.validate_data['token'])
+        authorization_token = get_id_token(serializer.validated_data['token'])
         user_data = Google.validate(authorization_token)
         try:
             user_data['sub']
@@ -190,7 +189,7 @@ class GoogleOauthSignInview(GenericAPIView):
             provider = 'google'
             new_user = {
                 'email': email,
-                'username': self.validated_data['username'],
+                'username': serializer.validated_data['username'],
                 'password': random_password(),
             }
             user = User.objects.create_user(**new_user)
@@ -231,7 +230,7 @@ class PasswordResetRequestView(GenericAPIView):
             return Response({"message": "Email is not verified", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
         uidb64 = urlsafe_base64_encode(smart_str(user.id).encode())
         token = PasswordResetTokenGenerator().make_token(user)
-        email_subject = "Your Password Reset Subject"
+        email_subject = "Password Reset Request"
         abslink = f"http:/127.0.0.8:8000/{uidb64}/{token}"
         email_body = f"Hi {user.username}, use the link below to reset your password: {abslink}"
         from_email = settings.EMAIL_HOST_USER
