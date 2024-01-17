@@ -166,7 +166,7 @@ class GoogleOauthSignInview(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        authorization_token = get_id_token(serializer.validated_data['token'])
+        authorization_token = get_id_token(serializer.validated_data['access_token'])
         user_data = Google.validate(authorization_token)
         try:
             user_data['sub']
@@ -258,7 +258,6 @@ class PasswordResetConfirmView(GenericAPIView):
         )
         serializer.is_valid(raise_exception=True)
         password = serializer.validated_data['password']
-        token = serializer.validated_data['token']
         id = urlsafe_base64_decode(uidb64).decode()
         user = User.objects.get(id=id)
         if not PasswordResetTokenGenerator().check_token(user, token):

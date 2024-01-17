@@ -155,3 +155,4 @@ class UserSerializer(serializers.ModelSerializer):
 
 class SetNewPasswordSerializer(serializers.Serializer):
     password = PasswordField()
+    
