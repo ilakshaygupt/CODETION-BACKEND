@@ -30,21 +30,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=50, blank=False, null=False, default=AUTH_PROVIDERS.get("email")
     )
     USERNAME_FIELD = "email"
-    jwt_token = models.CharField(max_length=255, blank=True, null=True)
     REQUIRED_FIELDS = ["username"]
 
     objects = UserManager()
 
     def tokens(self):
         refresh = RefreshToken.for_user(self)
-        if self.jwt_token:
-            try:
-                token = RefreshToken(self.jwt_token)
-                token.blacklist()
-            except:
-                pass
-        self.jwt_token = str(refresh)
-        self.save()
         return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
     def __str__(self):
