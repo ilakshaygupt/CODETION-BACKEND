@@ -20,7 +20,7 @@ def random_password():
 
 def send_generated_otp_to_email(email, request):
     subject = 'One time passcode for Email verification'
-    otp = random.randint(1000, 9999)
+    otp = random.randint(100000, 999999)
     user = User.objects.get(email=email)
     email_body = f'Hi {user.username} thanks for signing up on CODETION please verify your email with the \n one time passcode {otp}'
     from_email = settings.EMAIL_HOST_USER
