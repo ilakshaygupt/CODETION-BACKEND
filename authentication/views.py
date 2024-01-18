@@ -86,6 +86,7 @@ class VerifyUserEmailView(GenericAPIView):
         if otp == user_pass_obj.otp:
             user.is_verified = True
             tokenss = user.tokens()
+            user.save()
             user_pass_obj.delete()
             return Response({
                 'message': 'account email verified successfully',
