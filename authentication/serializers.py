@@ -37,8 +37,8 @@ password_error_messages = {
 otp_error_messages = {
     'blank': 'OTP cannot be blank',
     'required': 'OTP is required',
-    'max_length': 'OTP cannot be more than 4 characters',
-    'min_length': 'OTP cannot be less than 4 characters'
+    'max_length': 'OTP cannot be more than 6 characters',
+    'min_length': 'OTP cannot be less than 6 characters'
 }
 
 
@@ -100,7 +100,7 @@ class VerifyEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(
         max_length=155, min_length=6, error_messages=email_error_messages)
     otp = serializers.CharField(
-        min_length=4, max_length=4, error_messages=otp_error_messages)
+        min_length=6, max_length=6, error_messages=otp_error_messages)
 
 
 class LoginSerializer(serializers.ModelSerializer):
