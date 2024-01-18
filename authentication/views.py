@@ -146,7 +146,7 @@ class ResendOTPView(GenericAPIView):
 
     def post(self, request):
         serializer = self.serializer_class(
-            data=request.data, context={'request': request})
+            data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
         try:
@@ -154,7 +154,7 @@ class ResendOTPView(GenericAPIView):
         except:
             return Response({"message": "Email doesn't exist", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
         if not user.is_verified:
-            send_generated_otp_to_email(email, self.context['request'])
+            send_generated_otp_to_email(email, request)
             return Response({"message": "OTP resend successfully", 'success': True}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Email is already verified", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
