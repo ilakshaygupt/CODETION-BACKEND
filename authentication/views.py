@@ -229,7 +229,7 @@ class PasswordResetRequestView(GenericAPIView):
         try:
             user = User.objects.get(email=email)
         except:
-            return Response({"message": "Email doesn't exist", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Email is not registered", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
         if not user.is_verified:
             return Response({"message": "Email is not verified", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
         uidb64 = urlsafe_base64_encode(smart_str(user.id).encode())
