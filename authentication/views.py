@@ -237,7 +237,6 @@ class PasswordResetRequestView(GenericAPIView):
         uidb64 = urlsafe_base64_encode(smart_str(user.id).encode())
         token = PasswordResetTokenGenerator().make_token(user)
         email_subject = "Password Reset Request"
-        request=self.context.get('request')
         current_site=get_current_site(request).domain
         abslink = f"{current_site}/reset-password/{uidb64}/{token}"
         email_body = f"Hi {user.username}, use the link below to reset your password: {abslink}"
