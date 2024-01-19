@@ -145,7 +145,7 @@ class LogoutUserSerializer(serializers.Serializer):
 class GoogleSignInSerializer(serializers.Serializer):
 
     access_token = serializers.CharField(max_length=5000)
-    username = UsernameField()
+    
 
 
 class UserSerializer(serializers.ModelSerializer):
