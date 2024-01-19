@@ -238,7 +238,7 @@ class PasswordResetRequestView(GenericAPIView):
         token = PasswordResetTokenGenerator().make_token(user)
         email_subject = "Password Reset Request"
         current_site=get_current_site(request).domain
-        abslink = f"{current_site}/reset-password/{uidb64}/{token}"
+        abslink = f"http://localhost:3000/login/reset_password/{uidb64}/{token}/"
         email_body = f"Hi {user.username}, use the link below to reset your password: {abslink}"
         from_email = settings.EMAIL_HOST_USER
         d_email = EmailMessage(
