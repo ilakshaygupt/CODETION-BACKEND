@@ -27,6 +27,7 @@ from django.utils.encoding import smart_str
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import EmailMessage
 from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
 
 
 
@@ -236,9 +237,9 @@ class PasswordResetRequestView(GenericAPIView):
         uidb64 = urlsafe_base64_encode(smart_str(user.id).encode())
         token = PasswordResetTokenGenerator().make_token(user)
         email_subject = "Password Reset Request"
-        print(request.get_host())
-        
-        abslink = f"{request.get_host()}/{uidb64}/{token}"
+        request=self.context.get('request')
+        current_site=get_current_site(request).domain
+        abslink = f"{current_site}/reset-password/{uidb64}/{token}"
         email_body = f"Hi {user.username}, use the link below to reset your password: {abslink}"
         from_email = settings.EMAIL_HOST_USER
         d_email = EmailMessage(
