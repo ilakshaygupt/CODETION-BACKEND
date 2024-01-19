@@ -1,5 +1,7 @@
 
+import random
 from django.conf import settings
+import requests
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from authentication.get_google_auth_code import get_id_token
@@ -170,17 +172,18 @@ class GoogleOauthSignInview(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        authorization_token = get_id_token(serializer.validated_data['access_token'])
-        user_data = Google.validate(authorization_token)
+        authorization_token = serializer.validated_data['access_token']
+        url = f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={authorization_token}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            user_data = response.json()
+            print(user_data)
         try:
             user_data['sub']
         except:
             return Response({"message": "this token has expired or invalid please try again", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
-        if user_data['aud'] != settings.GOOGLE_CLIENT_ID:
-            return Response({"message": "Could not verify user.", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
-        email = user_data['email']
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email=user_data['email'])
             if not user.is_verified:
                 user.is_verified = True
                 user.save()
@@ -193,9 +196,15 @@ class GoogleOauthSignInview(GenericAPIView):
             }, status=status.HTTP_200_OK)
         except:
             provider = 'google'
+            family_name = user_data.get('family_name', '')
+            base_username = f"{user_data['given_name'].lower()}.{family_name.lower()}"
+            username = base_username
+            while User.objects.filter(username=username).exists():
+                random_number = random.randint(1000, 9999)
+                username = f"{base_username}{random_number}"
             new_user = {
-                'email': email,
-                'username': serializer.validated_data['username'],
+                'email': user_data['email'],
+                'username': username,
                 'password': random_password(),
             }
             user = User.objects.create_user(**new_user)

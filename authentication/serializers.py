@@ -46,6 +46,7 @@ class UsernameField(serializers.CharField):
     max_length = 25
     min_length = 6
     error_messages = username_error_messages
+    required = False
 
     def to_internal_value(self, data):
         regex = r'^[a-z0-9_-]+$'
@@ -143,7 +144,7 @@ class LogoutUserSerializer(serializers.Serializer):
 
 class GoogleSignInSerializer(serializers.Serializer):
 
-    access_token = serializers.CharField(min_length=6)
+    access_token = serializers.CharField(max_length=5000)
     username = UsernameField()
 
 
