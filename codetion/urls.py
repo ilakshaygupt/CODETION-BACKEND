@@ -12,12 +12,12 @@ schema_view = get_schema_view(
         terms_of_service="https://example.com/terms/",
         contact=openapi.Contact(email="contact@example.com"),
         license=openapi.License(name="MIT License"),
-    ),
-    public=True,
+    ),11
 )
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("authentication.urls")),
+        
     path('swagger/', schema_view.with_ui('swagger',
          cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc',

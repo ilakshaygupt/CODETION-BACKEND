@@ -81,11 +81,12 @@ class VerifyUserEmailView(GenericAPIView):
 
         otp = serializers.validated_data['otp']
         try:
-            user_pass_obj = OneTimePassword.objects.get(otp=otp)
+            user_pass_obj = OneTimePassword.objects.get(email=serializer.validated_data['email'], otp=otp)
         except:
             return Response({'message': 'Invalid request', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
 
         if user_pass_obj.has_expired():
+            user_pass_obj.delete()
             return Response({'message': 'OTP has expired', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
 
         if otp == user_pass_obj.otp:
@@ -99,7 +100,7 @@ class VerifyUserEmailView(GenericAPIView):
                 'success': True
             }, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "OTP is not same", 'success': True}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "OTP is not same", 'success': False}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginUserView(GenericAPIView):
