@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     'drf_yasg',
     'rest_framework_simplejwt.token_blacklist',
-    'authentication'
+    'authentication',
+    'quiz',
 ]
 SOCIAL_AUTH_PASSWORD = os.getenv('SOCIAL_AUTH_PASSWORD')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -158,12 +159,11 @@ STORAGES = {
 }
 
 REST_FRAMEWORK = {'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
-                  'NON_FIELD_ERRORS_KEY': 'error',
-                  'DEFAULT_AUTHENTICATION_CLASSES': (
-                      'rest_framework_simplejwt.authentication.JWTAuthentication',
-                  )
-
-                  }
+    'NON_FIELD_ERRORS_KEY': 'error',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        )
+}
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
