@@ -101,14 +101,15 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         model = Submission
         fields='__all__'
     def create(self, validated_data):
-        selected_choice_id  = self.context['view'].kwargs['id']
-        selected_choice_question_id = Choice.objects.get(id=selected_choice_id).question_id
-        if not Choice.objects.filter(id=selected_choice_id).exists():
+        choice_id  = self.context['view'].kwargs['id']
+        question_id = self.context['view'].kwargs['question_id']
+        if not Choice.objects.filter(id=choice_id,question_id=question_id).exists():
             raise serializers.ValidationError("Choice does not exist.")
-        submission = Submission.objects.get(quizinee=self.context['request'].user, question_id=selected_choice_question_id)
+        submission = Submission.objects.get(quizinee=self.context['request'].user, question_id=question_id)
+
         if submission is not None:
-            submission.selected_choice_id = selected_choice_id
-            submission.save()
+            submission.selected_choice_id = choice_id
         else:
-            submission = Submission.objects.create(selected_choice_id=selected_choice_id, quizinee=self.context['request'].user, question_id=selected_choice_question_id)
+            submission = Submission.objects.create(choice_id=choice_id, quizinee=self.context['request'].user, question_id=question_id)
+        submission.save()
         return submission

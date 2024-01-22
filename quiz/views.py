@@ -1,9 +1,11 @@
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from quiz.permissions import  AllowAny, IsQuizAdmin, IsQuizAdminOrReadOnly, MultipleFieldLookupMixin
-from .models import Quiz, Question, Choice, Submission
+from .models import Quiz, Question, Choice, RegisteredParticipant, Submission
 from .serializers import QuestionCreateSerializer, QuestionDisplaySerializer, QuestionUpdateSerializer, QuizCreateSerializer, QuizSerializer, ChoiceSerializer , QuizDisplaySerializer, SubmissionCreateSerializer
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 #For creating  and listing  as well as updating ,finding a particular quiz and deleting a quiz
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
@@ -77,16 +79,16 @@ class QuestionViewSet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
             return QuestionDisplaySerializer
         return QuestionDisplaySerializer
 
-class SubmissionCreateGet(viewsets.ModelViewSet):
+class SubmissionCreateGet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
     queryset = Submission.objects.all()
     serializer_class = QuizSerializer
     authentication_classes = [JWTAuthentication]
-    lookup_field = 'id'
+    lookup_fields = ('id','question_id')
 
     def get_queryset(self):
-        choice_id = self.kwargs.get('id')
-        user = self.request.user
-        return Submission.objects.filter(selected_choice_id=choice_id,quizinee=user)
+        return Submission.objects.filter(selected_choice_id=self.kwargs.get('id'),
+                                        quizinee=self.request.user,
+                                        question_id=self.kwargs.get('question_id'))
     
     def get_serializer_class(self):
         if self.request.method=='POST' :
@@ -100,3 +102,18 @@ class SubmissionCreateGet(viewsets.ModelViewSet):
         elif self.request.method == 'GET':
             return [IsQuizAdminOrReadOnly()]
         return [IsQuizAdmin()]
+    
+class ScoreViewSet(APIView):
+    authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsQuizAdmin]
+    def get(self, request, format=None):
+        participants = RegisteredParticipant.objects.all().select_related('quizinee', 'quiz')
+        for participant in participants:
+            submissions = Submission.objects.filter(quizinee=participant.quizinee, question__quiz=participant.quiz, selected_choice__is_correct=True)
+            score = 0
+            for submission in submissions:
+                if submission.selected_choice.is_correct:
+                    score += 1
+            participant.score = score
+            participant.save()
+        return Response({'Scores updated.':'adadad'}, status=status.HTTP_200_OK)

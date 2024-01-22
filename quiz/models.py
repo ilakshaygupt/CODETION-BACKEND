@@ -32,7 +32,7 @@ class Quiz(models.Model):
 class RegisteredParticipant(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     quizinee = models.ForeignKey(User, on_delete=models.CASCADE)
-
+    score = models.IntegerField(default=0)
 class Question(models.Model):
     title = models.CharField(max_length=200)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
@@ -67,5 +67,4 @@ class Submission(models.Model):
     def alreadySubmitted(self):
         return len(Submission.objects.filter(quiz=self.quiz, quizinee=self.quizinee)) >= 1
     def __str__(self):
-        return "BY---->"+str(self.quizinee.username) + "|    QUESTION----->   "+ str(self.question.title) + " |   SELECTED OPTION---->  "+str(self.selected_choice.choice_text)
-    
+        return "BY---->"+str(self.quizinee.username) + "|    QUESTION----->   "+ str(self.question.title) + " |   SELECTED OPTION---->  "+str(self.selected_choice.choice_text)        
