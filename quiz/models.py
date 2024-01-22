@@ -54,17 +54,18 @@ class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     
     def __str__(self):
-        return str(self.id) + " " +  " " 
+        return str(self.id) + " -->  " +  str(self.choice_text) 
 
 
 class Submission(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    quizinee = models.ForeignKey(User, on_delete=models.CASCADE)
-    selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE,null=True, blank=True)
+    quizinee = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
 
     def isCorrect(self):
         return self.selected_choice.is_correct
     def alreadySubmitted(self):
         return len(Submission.objects.filter(quiz=self.quiz, quizinee=self.quizinee)) >= 1
     def __str__(self):
-        return str(self.id)  + str(self.quizinee.username) + "(" + str(self.quiz.title) + ")"
+        return "BY---->"+str(self.quizinee.username) + "|    QUESTION----->   "+ str(self.question.title) + " |   SELECTED OPTION---->  "+str(self.selected_choice.choice_text)
+    

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Quiz, Question, Choice
+from .models import Quiz, Question, Choice, Submission
 
 class QuizSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,6 +27,7 @@ class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
         fields = ['id', 'choice_text', 'is_correct']
+    
         
 class ChoiceDisplaySerializer(serializers.ModelSerializer):
     class Meta:
@@ -83,10 +84,31 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
 
         for choice_data in choices_data:
             choice_data = dict(choice_data)
-            print(choice_data)
             choice_id = choice_data.get('id', None)
             choice_obj = Choice.objects.get(id=choice_id)
             choice_obj.choice_text = choice_data.get('choice_text', choice_obj.choice_text)
             choice_obj.is_correct = choice_data.get('is_correct', choice_obj.is_correct)
             choice_obj.save()
         return question_obj
+
+class SubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Submission
+        fields = '__all__'
+
+class SubmissionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Submission
+        fields='__all__'
+    def create(self, validated_data):
+        selected_choice_id  = self.context['view'].kwargs['id']
+        selected_choice_question_id = Choice.objects.get(id=selected_choice_id).question_id
+        if not Choice.objects.filter(id=selected_choice_id).exists():
+            raise serializers.ValidationError("Choice does not exist.")
+        submission = Submission.objects.get(quizinee=self.context['request'].user, question_id=selected_choice_question_id)
+        if submission is not None:
+            submission.selected_choice_id = selected_choice_id
+            submission.save()
+        else:
+            submission = Submission.objects.create(selected_choice_id=selected_choice_id, quizinee=self.context['request'].user, question_id=selected_choice_question_id)
+        return submission
