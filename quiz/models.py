@@ -42,6 +42,8 @@ class Question(models.Model):
     
     def getTotalChoices(self):
         return len(Choice.objects.filter(question=self.id))
+    def is_correct_option(self):
+        return len(Choice.objects.filter(question=self.id, is_correct=True)) == 1
     
     def __str__(self):
         return str(self.id) + " " + self.quiz.title
@@ -49,13 +51,7 @@ class Question(models.Model):
 class Choice(models.Model):
     choice_text = models.CharField(max_length=200)
     is_correct = models.BooleanField(default=False)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    
-    def have_all_options(self):
-        return len(Choice.objects.filter(question=self.question)) >= 4
-    
-    def have_correct_option(self):
-        return len(Choice.objects.filter(question=self.question, is_correct=True)) >= 1
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     
     def __str__(self):
         return str(self.id) + "." + str(self.choice_text + "(" + self.question.description + ")")

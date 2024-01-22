@@ -19,16 +19,17 @@ class QuizCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         quiz = Quiz.objects.create(**validated_data, admin=self.context['request'].user)
         return quiz
+        
     
 class ChoiceSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = Choice
         fields = ['id', 'choice_text', 'is_correct']
-    
-    
+        
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
-    choices = ChoiceSerializer(many=True, write_only=True)
+    choices = ChoiceSerializer(many=True)
 
     class Meta:
         model = Question
@@ -38,7 +39,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
         if len(value) != 4:
             raise serializers.ValidationError("Exactly four choices are required.")
         return value
-
+    
     def create(self, validated_data):
         choices_data = validated_data.pop('choices')
         quiz_id = self.context['view'].kwargs['quiz_id']
@@ -48,11 +49,35 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
             Choice.objects.create(question=question, **choice_data)
         return question
 
-
 class QuestionDisplaySerializer(serializers.ModelSerializer):
+    choices = ChoiceSerializer(many=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'quiz', 'description', ]
+        fields = ['id', 'title', 'quiz', 'description', 'choices']
+
+class QuestionUpdateSerializer(serializers.ModelSerializer):
+    choices = ChoiceSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'title', 'quiz', 'description', 'choices']
+
+    def validate_choices(self, value):
+        if len(value) != 4:
+            raise serializers.ValidationError("Exactly four choices are required.")
+        return value
     
-    
+    def update(self, instance, validated_data):
+        choices_data = validated_data.pop('choices')
+        question_obj = Question.objects.get(id=instance.id)
+        question_obj.title = validated_data.get('title', question_obj.title)
+        question_obj.description = validated_data.get('description', question_obj.description)
+        question_obj.save()
+        print(choices_data)
+        for choice_data in choices_data:
+            choice_id = choice_data.get('id', None)
+            choice_obj = Choice.objects.get(id=choice_id)
+            choice_obj.text = choice_data.get('text', choice_obj.text)
+            choice_obj.save()
+        return question_obj

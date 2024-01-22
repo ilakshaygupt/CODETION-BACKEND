@@ -1,9 +1,9 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from quiz.permissions import  AllowAny, IsQuizAdmin, IsQuizAdminOrReadOnly, IsRegisteredParticipant, MultipleFieldLookupMixin
+from quiz.permissions import  AllowAny, CanChangeQuestion, IsQuizAdmin, IsQuizAdminOrReadOnly, IsRegisteredParticipant, MultipleFieldLookupMixin
 from .models import Quiz, Question, Choice
-from .serializers import QuestionCreateSerializer, QuestionDisplaySerializer, QuizCreateSerializer, QuizSerializer, ChoiceSerializer , QuizDisplaySerializer
+from .serializers import QuestionCreateSerializer, QuestionDisplaySerializer, QuestionUpdateSerializer, QuizCreateSerializer, QuizSerializer, ChoiceSerializer , QuizDisplaySerializer
 
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
@@ -36,7 +36,7 @@ class QuestionCreateGet(viewsets.ModelViewSet):
         return Question.objects.filter(quiz_id=quiz_id)
     
     def get_serializer_class(self):
-        if self.request.method=='POST':
+        if self.request.method=='POST' :
             return QuestionCreateSerializer
         elif self.request.method == 'GET':
             return QuestionDisplaySerializer
@@ -61,15 +61,17 @@ class QuestionViewSet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
         return Question.objects.filter(quiz_id=quiz_id, id=id)
         
     def get_permissions(self):
-        if self.request.method=='POST':
-            return [IsQuizAdmin()]
+        if self.request.method=='POST' :
+            return [CanChangeQuestion()]
         elif self.request.method == 'GET':
             return [IsRegisteredParticipant()]
-        return [IsQuizAdmin()]
+        return [CanChangeQuestion()]
     
     def get_serializer_class(self):
         if self.request.method=='POST':
             return QuestionCreateSerializer
+        elif  self.request.method=='PATCH':
+            return QuestionUpdateSerializer
         elif self.request.method == 'GET':
             return QuestionDisplaySerializer
         return QuestionDisplaySerializer

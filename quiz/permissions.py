@@ -36,6 +36,17 @@ class IsQuizAdminOrReadOnly(permissions.BasePermission):
             return RegisteredParticipant.objects.filter(quiz=quiz, user=request.user).exists()
         except Quiz.DoesNotExist:
             return False
+class CanChangeQuestion(permissions.BasePermission):
+    """
+    Custom permission to only allow quiz admin to update and delete the quiz.
+    """
+
+    def has_permission(self, request, view):
+            quiz_id = view.kwargs.get('quiz_id')
+            quiz = Quiz.objects.get(id=quiz_id)
+            if quiz.admin == request.user:
+                return True
+            return False
 class IsRegisteredParticipant(permissions.BasePermission):
     """
     Custom permission to only allow registered participants to view the quiz.
