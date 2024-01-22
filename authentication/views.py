@@ -81,7 +81,7 @@ class VerifyUserEmailView(GenericAPIView):
 
         otp = serializers.validated_data['otp']
         try:
-            user_pass_obj = OneTimePassword.objects.get(email=serializer.validated_data['email'], otp=otp)
+            user_pass_obj = OneTimePassword.objects.get(email=serializers.validated_data['email'], otp=otp)
         except:
             return Response({'message': 'Invalid request', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
 

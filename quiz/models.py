@@ -1,11 +1,11 @@
 import datetime
 from django.db import models
 from authentication.models import User
+from django.utils import timezone
 
 class Quiz(models.Model):
     admin = models.ForeignKey(User, on_delete=models.CASCADE)
-    unique_code = models.IntegerField(unique=True)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200,unique=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     description = models.TextField(max_length=500, blank=True)
@@ -16,16 +16,11 @@ class Quiz(models.Model):
     def getTotalParticipant(self):
         participant = len(RegisteredParticipant.objects.filter(quiz_id=self.id))
         return participant
-    
-    def getParticipant(self):
-        participant = RegisteredParticipant.objects.filter(quiz_id=self.id)
-        return participant
-    
     def isStarted(self):
-        return self.start_time <= datetime.datetime.now()
+        return self.start_time <= timezone.now()
     
     def isEnded(self):
-        return self.end_time <= datetime.datetime.now()
+        return self.end_time <= timezone.now()
     
     def isOngoing(self):
         return self.isStarted() and not self.isEnded()
@@ -40,7 +35,6 @@ class RegisteredParticipant(models.Model):
 
 class Question(models.Model):
     title = models.CharField(max_length=200)
-    unique_code = models.IntegerField(unique=True)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     description = models.TextField(max_length=500, blank=True)
     def getCorrectChoice(self):
@@ -77,4 +71,4 @@ class Submission(models.Model):
     def alreadySubmitted(self):
         return len(Submission.objects.filter(quiz=self.quiz, quizinee=self.quizinee)) >= 1
     def __str__(self):
-        return str(self.id) + "." + str(self.quizinee.username) + "(" + str(self.quiz.title) + ")"
+        return str(self.id)  + str(self.quizinee.username) + "(" + str(self.quiz.title) + ")"
