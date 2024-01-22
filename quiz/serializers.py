@@ -22,11 +22,16 @@ class QuizCreateSerializer(serializers.ModelSerializer):
         
     
 class ChoiceSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
     
     class Meta:
         model = Choice
         fields = ['id', 'choice_text', 'is_correct']
         
+class ChoiceDisplaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Choice
+        fields = ['id', 'choice_text']
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True)
@@ -50,7 +55,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
         return question
 
 class QuestionDisplaySerializer(serializers.ModelSerializer):
-    choices = ChoiceSerializer(many=True)
+    choices = ChoiceDisplaySerializer(many=True)
 
     class Meta:
         model = Question
@@ -63,6 +68,7 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
         model = Question
         fields = ['id', 'title', 'quiz', 'description', 'choices']
 
+
     def validate_choices(self, value):
         if len(value) != 4:
             raise serializers.ValidationError("Exactly four choices are required.")
@@ -74,10 +80,13 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
         question_obj.title = validated_data.get('title', question_obj.title)
         question_obj.description = validated_data.get('description', question_obj.description)
         question_obj.save()
-        print(choices_data)
+
         for choice_data in choices_data:
+            choice_data = dict(choice_data)
+            print(choice_data)
             choice_id = choice_data.get('id', None)
             choice_obj = Choice.objects.get(id=choice_id)
-            choice_obj.text = choice_data.get('text', choice_obj.text)
+            choice_obj.choice_text = choice_data.get('choice_text', choice_obj.choice_text)
+            choice_obj.is_correct = choice_data.get('is_correct', choice_obj.is_correct)
             choice_obj.save()
         return question_obj

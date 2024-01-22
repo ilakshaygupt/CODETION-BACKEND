@@ -54,7 +54,7 @@ class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     
     def __str__(self):
-        return str(self.id) + "." + str(self.choice_text + "(" + self.question.description + ")")
+        return str(self.id) + " " +  " " 
 
 
 class Submission(models.Model):
