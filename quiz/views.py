@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from authentication.renderers import UserRenderer
 from quiz.permissions import  AllowAny, IsQuizAdmin, IsQuizAdminOrReadOnly, MultipleFieldLookupMixin
 from .models import Quiz, Question, Choice, RegisteredParticipant, Submission
 from .serializers import QuestionCreateSerializer, QuestionDisplaySerializer, QuestionUpdateSerializer, QuizCreateSerializer, QuizSerializer, ChoiceSerializer , QuizDisplaySerializer, SubmissionCreateSerializer
@@ -7,7 +8,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 #For creating  and listing  as well as updating ,finding a particular quiz and deleting a quiz
+
 class QuizViewSet(viewsets.ModelViewSet):
+    renderer_classes = [UserRenderer]
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     authentication_classes = [JWTAuthentication]
