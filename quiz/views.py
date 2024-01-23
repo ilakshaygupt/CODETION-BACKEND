@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from authentication.renderers import UserRenderer
-from quiz.permissions import  AllowAny, IsQuizAdmin, IsQuizAdminOrReadOnly, MultipleFieldLookupMixin
+from quiz.permissions import  AllowAny, CanChangeQuestion, IsQuizAdmin, IsQuizAdminOrReadOnly, MultipleFieldLookupMixin
 from .models import Quiz, Question, Choice, RegisteredParticipant, Submission
 from .serializers import QuestionCreateSerializer, QuestionDisplaySerializer, QuestionUpdateSerializer, QuizCreateSerializer, QuizSerializer, ChoiceSerializer , QuizDisplaySerializer, SubmissionCreateSerializer
 from rest_framework.views import APIView
@@ -33,6 +33,7 @@ class QuizViewSet(viewsets.ModelViewSet):
 
 # For creating a question and listing all quesiton qith help of quiz id
 class QuestionCreateGet(viewsets.ModelViewSet):
+    renderer_classes = [UserRenderer]
     queryset = Question.objects.all()
     serializer_class = QuizSerializer
     authentication_classes = [JWTAuthentication]
@@ -54,14 +55,15 @@ class QuestionCreateGet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.request.method=='POST':
-            return [IsQuizAdmin()]
+            return [CanChangeQuestion()]
         elif self.request.method == 'GET':
             return [IsQuizAdminOrReadOnly()]
-        return [IsQuizAdmin()]
+        return [CanChangeQuestion()]
 
 
 # For getting a particular question and updating and deleting a question
 class QuestionViewSet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
+    renderer_classes = [UserRenderer]
     authentication_classes = [JWTAuthentication]
     lookup_fields = ('id')
     def get_queryset(self,):
@@ -83,6 +85,7 @@ class QuestionViewSet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
         return QuestionDisplaySerializer
 
 class SubmissionCreateGet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
+    renderer_classes = [UserRenderer]
     queryset = Submission.objects.all()
     serializer_class = QuizSerializer
     authentication_classes = [JWTAuthentication]
@@ -120,3 +123,4 @@ class ScoreViewSet(APIView):
             participant.score = score
             participant.save()
         return Response({'Scores updated.':'adadad'}, status=status.HTTP_200_OK)
+    

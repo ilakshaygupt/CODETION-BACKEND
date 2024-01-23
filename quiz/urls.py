@@ -8,4 +8,5 @@ urlpatterns = [
     path('question/<int:id>/', views.QuestionViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='question-detail'),
     path('question/<int:question_id>/submission/<int:id>/', views.SubmissionCreateGet.as_view({'post': 'create','get': 'list','get':'retrieve'}), name='choice-list'),
     path('score/', views.ScoreViewSet.as_view(), name='score-list'),
+
 ]

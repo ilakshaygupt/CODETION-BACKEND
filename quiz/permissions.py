@@ -22,6 +22,18 @@ class IsQuizAdmin(permissions.BasePermission):
         except Quiz.DoesNotExist:
             return False
         
+class CanChangeQuestion(permissions.BasePermission):
+    """
+    Custom permission to only allow quiz admin to update and delete the quiz.
+    """
+
+    def has_permission(self, request, view):
+        try:
+            quiz_id = view.kwargs.get('quiz_id')
+            quiz = Quiz.objects.get(id=quiz_id)
+            return request.user == quiz.admin
+        except Quiz.DoesNotExist:
+            return False
 class IsQuizAdminOrReadOnly(permissions.BasePermission):
     """
     Custom permission to only allow quiz admin to update and delete the quiz.

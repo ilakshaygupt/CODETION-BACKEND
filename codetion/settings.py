@@ -42,7 +42,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     'drf_yasg',
     'rest_framework_simplejwt.token_blacklist',
-        "drf_standardized_errors",
     'authentication',
     'quiz',
 ]
@@ -165,7 +164,6 @@ REST_FRAMEWORK = {'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSc
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         ),
           "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
-        #   "DEFAULT_RENDERER_CLASSES" : ("authentication.renderers.UserRenderer",),
 }
 DRF_STANDARDIZED_ERRORS = {"EXCEPTION_FORMATTER_CLASS": "authentication.renderers.MyExceptionFormatter"}
 SIMPLE_JWT = {
