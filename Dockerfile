@@ -1,19 +1,22 @@
 
-FROM python:3.8
-
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+FROM python:latest
 
 WORKDIR /app
 
-COPY requirements.txt /app/
+COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app/
+RUN apt-get update && apt-get install -y postgresql-client
 
-COPY entrypoint.sh /app/entrypoint.sh
+COPY . .
 
-RUN chmod +x /app/entrypoint.sh
+EXPOSE 8000
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENV DB_HOST=localhost
+ENV DB_PORT=5432
+ENV DB_NAME=codetion
+ENV DB_USER=admin
+ENV DB_PASSWORD=admin
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -74,3 +74,5 @@ urllib3
 virtualenv
 whitenoise
 yarl
+dj_database_url
+psycopg2-binary
