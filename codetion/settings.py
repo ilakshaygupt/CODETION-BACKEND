@@ -42,7 +42,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'authentication',
     'quiz',
+        "debug_toolbar",
 ]
 SOCIAL_AUTH_PASSWORD = os.getenv('SOCIAL_AUTH_PASSWORD')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -74,8 +75,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
 ROOT_URLCONF = 'codetion.urls'
 
 TEMPLATES = [

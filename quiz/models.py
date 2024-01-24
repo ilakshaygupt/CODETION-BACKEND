@@ -9,6 +9,7 @@ class Quiz(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     description = models.TextField(max_length=500, blank=True)
+   
 
     def getTotalQuestion(self):
         question = len(Question.objects.filter(quiz_id=self.id))

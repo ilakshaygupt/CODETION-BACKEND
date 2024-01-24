@@ -7,11 +7,12 @@ from .serializers import QuestionCreateSerializer, QuestionDisplaySerializer, Qu
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import generics
 #For creating  and listing  as well as updating ,finding a particular quiz and deleting a quiz
 
 class QuizViewSet(viewsets.ModelViewSet):
     renderer_classes = [UserRenderer]
-    queryset = Quiz.objects.all()
+    queryset = Quiz.objects.all().prefetch_related('question_set')
     serializer_class = QuizSerializer
     authentication_classes = [JWTAuthentication]
     lookup_field = 'id'
