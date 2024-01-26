@@ -12,7 +12,7 @@ schema_view = get_schema_view(
         terms_of_service="https://example.com/terms/",
         contact=openapi.Contact(email="contact@example.com"),
         license=openapi.License(name="MIT License"),
-    ),11
+    ),
 )
 urlpatterns = [
     path("admin/", admin.site.urls),
