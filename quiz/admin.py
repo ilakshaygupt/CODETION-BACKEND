@@ -1,3 +1,16 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Quiz, Question, Choice, RegisteredParticipant, Submission
+
+class ChoiceInline(admin.TabularInline):
+    model = Choice
+    extra = 1
+
+class QuestionAdmin(admin.ModelAdmin):
+    inlines = [ChoiceInline]
+
+admin.site.register(Quiz)
+admin.site.register(Question, QuestionAdmin)
+admin.site.register(RegisteredParticipant)
+admin.site.register(Choice)
+admin.site.register(Submission)

@@ -13,7 +13,6 @@ from datetime import timedelta
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -59,7 +58,9 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     'drf_yasg',
     'rest_framework_simplejwt.token_blacklist',
-    'authentication'
+    'authentication',
+    'quiz',
+        "debug_toolbar",
 ]
 SOCIAL_AUTH_PASSWORD = os.getenv('SOCIAL_AUTH_PASSWORD')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -73,8 +74,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
 ROOT_URLCONF = 'codetion.urls'
 
 TEMPLATES = [
@@ -100,10 +107,20 @@ WSGI_APPLICATION = 'codetion.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'admin',
+        'USER': 'admin',
+        'PASSWORD': 'admin',
+        'HOST': 'postgres',
+        'PORT': '5432',
     }
 }
 
@@ -158,14 +175,15 @@ STORAGES = {
 }
 
 REST_FRAMEWORK = {'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
-                  'NON_FIELD_ERRORS_KEY': 'error',
-                  'DEFAULT_AUTHENTICATION_CLASSES': (
-                      'rest_framework_simplejwt.authentication.JWTAuthentication',
-                  )
-
-                  }
+    'NON_FIELD_ERRORS_KEY': 'error',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        ),
+          "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+}
+DRF_STANDARDIZED_ERRORS = {"EXCEPTION_FORMATTER_CLASS": "authentication.renderers.MyExceptionFormatter"}
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1000),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',

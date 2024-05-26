@@ -73,10 +73,9 @@ class PasswordField(serializers.CharField):
             raise serializers.ValidationError(
                 'password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character')
 
-
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=155, min_length=6,
-                                   error_messages=email_error_messages, validators=[normalize_email])
+    error_messages=email_error_messages, validators=[normalize_email])
     username = UsernameField()
 
     password = PasswordField()
