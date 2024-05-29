@@ -10,15 +10,10 @@ schema_view = get_schema_view(
         description="Test description",
         terms_of_service="https://www.google.com/policies/terms/",
         contact=openapi.Contact(email="contact@example.com"),
-<<<<<<< HEAD
-        license=openapi.License(name="MIT License"),
-    ),
-=======
         license=openapi.License(name="BSD License"),
     ),
     validators=["ssv", "flex"],
     public=True,
->>>>>>> origin/quiz
 )
 urlpatterns = [
     path("admin/", admin.site.urls),
