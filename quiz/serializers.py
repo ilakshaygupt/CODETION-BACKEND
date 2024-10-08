@@ -66,12 +66,16 @@ class QuestionDisplaySerializer(serializers.ModelSerializer):
         model = Question
         fields = ['id', 'title', 'quiz', 'description', 'choices']
 
+class ChoiceUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Choice
+        fields = ['choice_text', 'is_correct']
 class QuestionUpdateSerializer(serializers.ModelSerializer):
-    choices = ChoiceSerializer(many=True)
+    choices = ChoiceUpdateSerializer(many=True,required=False)
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'quiz', 'description', 'choices']
+        fields = [ 'title', 'description', 'choices']
 
 
     def validate_choices(self, value):
@@ -86,13 +90,12 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
         question_obj.description = validated_data.get('description', question_obj.description)
         question_obj.save()
 
+        # Clear existing choices
+        instance.choices.all().delete()
+
+        # Create new choices
         for choice_data in choices_data:
-            choice_data = dict(choice_data)
-            choice_id = choice_data.get('id', None)
-            choice_obj = Choice.objects.get(id=choice_id)
-            choice_obj.choice_text = choice_data.get('choice_text', choice_obj.choice_text)
-            choice_obj.is_correct = choice_data.get('is_correct', choice_obj.is_correct)
-            choice_obj.save()
+            Choice.objects.create(question=instance, **choice_data)
         return question_obj
 
 class SubmissionSerializer(serializers.ModelSerializer):

@@ -28,6 +28,8 @@ class CanChangeQuestion(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
+        # if  not request.user.is_authenticated:
+        #     return False
         try:
             quiz_id = view.kwargs.get('quiz_id')
             quiz = Quiz.objects.get(id=quiz_id)
@@ -40,16 +42,25 @@ class IsQuizAdminOrReadOnly(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
+        print(view.kwargs.get('id'))
         try:
-            quiz_id = view.kwargs.get('quiz_id')
+            quiz_id = view.kwargs.get('id')
             quiz = Quiz.objects.get(id=quiz_id)
+            
             if quiz.admin == request.user:
                 return True
-            return RegisteredParticipant.objects.filter(quiz=quiz, user=request.user).exists()
+            return RegisteredParticipant.objects.filter(quiz=quiz, quizinee=request.user).exists()
         except Quiz.DoesNotExist:
             return False
         
 
+class AuthenticatedUser(permissions.BasePermission):
+    """
+    Custom permission to only allow authenticated users.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
 class AllowAny(permissions.BasePermission):
     """
     Custom permission to allow any request.

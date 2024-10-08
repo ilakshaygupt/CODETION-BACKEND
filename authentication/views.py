@@ -45,13 +45,13 @@ class RegisterView(GenericAPIView):
 
         if user and user[0].is_verified:
             return Response({'message': 'email already exists', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
-
+        user.delete()
         user = User.objects.filter(
             username=serializers.validated_data['username'])
 
         if user and user[0].is_verified:
             return Response({'message': 'username already exists', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
-
+        user.delete()
         user = serializers.save()
 
         send_generated_otp_to_email(user.email, request)

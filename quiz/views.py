@@ -1,13 +1,14 @@
 from rest_framework import viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from authentication.renderers import UserRenderer
-from quiz.permissions import  AllowAny, CanChangeQuestion, IsQuizAdmin, IsQuizAdminOrReadOnly, MultipleFieldLookupMixin
+from quiz.permissions import  AllowAny, AuthenticatedUser, CanChangeQuestion, IsQuizAdmin, IsQuizAdminOrReadOnly, MultipleFieldLookupMixin
 from .models import Quiz, Question, Choice, RegisteredParticipant, Submission
 from .serializers import QuestionCreateSerializer, QuestionDisplaySerializer, QuestionUpdateSerializer, QuizCreateSerializer, QuizSerializer, ChoiceSerializer , QuizDisplaySerializer, SubmissionCreateSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
 #For creating  and listing  as well as updating ,finding a particular quiz and deleting a quiz
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -18,15 +19,16 @@ class QuizViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
         
     def get_serializer_class(self):
-        if self.request.method=='POST':
+        if self.request.method=='POST' or self.request.method=='PATCH':
             return QuizCreateSerializer
         elif self.request.method == 'GET':
             return QuizDisplaySerializer
+       
         return QuizSerializer
 
     def get_permissions(self):
         if self.request.method=='POST':
-            return [AllowAny()]
+            return [AuthenticatedUser()]
         elif self.request.method == 'GET':
             return [AllowAny()]
         return [IsQuizAdmin()]
@@ -69,7 +71,7 @@ class QuestionViewSet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
     lookup_fields = ('id')
     def get_queryset(self,):
         id = self.kwargs.get('id')
-        return Question.objects.filter( id=id)
+        return Question.objects.filter(id=id)
     
     def get_permissions(self):
         if self.request.method=='POST' :
@@ -79,7 +81,7 @@ class QuestionViewSet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
         return [IsQuizAdmin()]
     
     def get_serializer_class(self):
-        if  self.request.method=='PATCH':
+        if  self.request.method=='PUT':
             return QuestionUpdateSerializer
         elif self.request.method == 'GET':
             return QuestionDisplaySerializer
@@ -112,7 +114,7 @@ class SubmissionCreateGet(MultipleFieldLookupMixin,viewsets.ModelViewSet):
     
 class ScoreViewSet(APIView):
     authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsQuizAdmin]
+    permission_classes = [IsQuizAdmin]
     def get(self, request, format=None):
         participants = RegisteredParticipant.objects.all().select_related('quizinee', 'quiz')
         for participant in participants:

@@ -20,6 +20,7 @@ distlib==0.3.8
 Django
 django-allauth
 django-cloudinary-storage
+setuptools
 django-cors-headers
 django-debug-toolbar
 django-rest-auth
