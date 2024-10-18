@@ -11,15 +11,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN apt-get update && apt-get install -y postgresql-client
-RUN sudo apt-get install --reinstall python-pkg-resources
 COPY . .
 
-EXPOSE 8000
+EXPOSE 8003
 
 ENV DB_HOST=postgres
 ENV DB_PORT=5432
-ENV DB_NAME=postgres
-ENV DB_USER=postgres
-ENV DB_PASSWORD=postgres
+ENV DB_NAME=codetion
+ENV DB_USER=codetion
+ENV DB_PASSWORD=codetion
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8003"]

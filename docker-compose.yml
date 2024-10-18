@@ -4,9 +4,9 @@ services:
     image: postgres:latest
     container_name: codetion_postgres
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: codetion
+      POSTGRES_USER: codetion
+      POSTGRES_PASSWORD: codetion
     ports:
       - "5432:5432"
     volumes:
@@ -23,13 +23,10 @@ services:
     working_dir: /app
     command: /app/entrypoint.sh
     ports:
-      - "8000:8000"
+      - "8003:8003"
     volumes:
       - .:/app
     depends_on:
       - postgres
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
-
 volumes:
   postgres_data:
