@@ -13,6 +13,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   django:
+    build:
+      context: .
+      dockerfile: Dockerfile
     tty: true
     image: python:latest
     
